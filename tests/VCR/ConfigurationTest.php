@@ -2,28 +2,31 @@
 
 namespace VCR;
 
+use InvalidArgumentException;
+use PHPUnit\Framework\TestCase;
+
 /**
  *
  */
-class ConfigurationTest extends \PHPUnit_Framework_TestCase
+class ConfigurationTest extends TestCase
 {
     /**
      * @var Configuration
      */
     private $config;
 
-    public function setUp()
+    protected function setUp() : void
     {
         $this->config = new Configuration;
     }
 
     public function testSetCassettePathThrowsErrorOnInvalidPath()
     {
-        $this->setExpectedException(
-            'VCR\VCRException',
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage(
             "Cassette path 'invalid_path' is not a directory. Please either "
-            . 'create it or set a different cassette path using '
-            . "\\VCR\\VCR::configure()->setCassettePath('directory')."
+            .'create it or set a different cassette path using '
+            ."\\VCR\\VCR::configure()->setCassettePath('directory')."
         );
         $this->config->setCassettePath('invalid_path');
     }
@@ -31,22 +34,22 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
     public function testGetLibraryHooks()
     {
         $this->assertEquals(
-            array(
+            [
                 'VCR\LibraryHooks\StreamWrapperHook',
                 'VCR\LibraryHooks\CurlHook',
                 'VCR\LibraryHooks\SoapHook',
-            ),
+            ],
             $this->config->getLibraryHooks()
         );
     }
 
     public function testEnableLibraryHooks()
     {
-        $this->config->enableLibraryHooks(array('stream_wrapper'));
+        $this->config->enableLibraryHooks(['stream_wrapper']);
         $this->assertEquals(
-            array(
+            [
                 'VCR\LibraryHooks\StreamWrapperHook',
-            ),
+            ],
             $this->config->getLibraryHooks()
         );
     }
@@ -55,41 +58,44 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
     {
         $this->config->enableLibraryHooks('stream_wrapper');
         $this->assertEquals(
-            array(
+            [
                 'VCR\LibraryHooks\StreamWrapperHook',
-            ),
+            ],
             $this->config->getLibraryHooks()
         );
     }
 
     public function testEnableLibraryHooksFailsWithWrongHookName()
     {
-        $this->setExpectedException('InvalidArgumentException', "Library hooks don't exist: non_existing");
-        $this->config->enableLibraryHooks(array('non_existing'));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Library hooks don't exist: non_existing");
+        $this->config->enableLibraryHooks(['non_existing']);
     }
 
     public function testEnableRequestMatchers()
     {
-        $this->config->enableRequestMatchers(array('body', 'headers'));
+        $this->config->enableRequestMatchers(['body', 'headers']);
         $this->assertEquals(
-            array(
-                array('VCR\RequestMatcher', 'matchHeaders'),
-                array('VCR\RequestMatcher', 'matchBody'),
-            ),
+            [
+                ['VCR\RequestMatcher', 'matchHeaders'],
+                ['VCR\RequestMatcher', 'matchBody'],
+            ],
             $this->config->getRequestMatchers()
         );
     }
 
     public function testEnableRequestMatchersFailsWithNoExistingName()
     {
-        $this->setExpectedException('InvalidArgumentException', "Request matchers don't exist: wrong, name");
-        $this->config->enableRequestMatchers(array('wrong', 'name'));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Request matchers don't exist: wrong, name");
+        $this->config->enableRequestMatchers(['wrong', 'name']);
     }
 
     public function testAddRequestMatcherFailsWithNoName()
     {
-        $this->setExpectedException('VCR\VCRException', "A request matchers name must be at least one character long. Found ''");
-        $expected = function ($first, $second) {
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage("A request matchers name must be at least one character long. Found ''");
+        $expected = function($first, $second) {
             return true;
         };
         $this->config->addRequestMatcher('', $expected);
@@ -97,13 +103,14 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function testAddRequestMatcherFailsWithWrongCallback()
     {
-        $this->setExpectedException('VCR\VCRException', "Request matcher 'example' is not callable.");
-        $this->config->addRequestMatcher('example', array());
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage("Request matcher 'example' is not callable.");
+        $this->config->addRequestMatcher('example', []);
     }
 
     public function testAddRequestMatchers()
     {
-        $expected = function () {
+        $expected = function() {
             return true;
         };
         $this->config->addRequestMatcher('new_matcher', $expected);
@@ -121,15 +128,16 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function availableStorageProvider()
     {
-        return array(
-            array('json', 'VCR\Storage\Json'),
-            array('yaml', 'VCR\Storage\Yaml'),
-        );
+        return [
+            ['json', 'VCR\Storage\Json'],
+            ['yaml', 'VCR\Storage\Yaml'],
+        ];
     }
 
     public function testSetStorageInvalidName()
     {
-        $this->setExpectedException('VCR\VCRException', "Storage 'Does not exist' not available.");
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage("Storage 'Does not exist' not available.");
         $this->config->setStorage('Does not exist');
     }
 
@@ -143,7 +151,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function testWhitelist()
     {
-        $expected = array('Tux', 'Gnu');
+        $expected = ['Tux', 'Gnu'];
 
         $this->config->setWhiteList($expected);
 
@@ -152,7 +160,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function testBlacklist()
     {
-        $expected = array('Tux', 'Gnu');
+        $expected = ['Tux', 'Gnu'];
 
         $this->config->setBlackList($expected);
 
@@ -161,7 +169,8 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
 
     public function testSetModeInvalidName()
     {
-        $this->setExpectedException('VCR\VCRException', "Mode 'invalid' does not exist.");
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage("Mode 'invalid' does not exist.");
         $this->config->setMode('invalid');
     }
 }

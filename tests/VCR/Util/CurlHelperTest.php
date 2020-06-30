@@ -3,10 +3,12 @@
 namespace VCR\Util;
 
 use org\bovigo\vfs\vfsStream;
+use PHPUnit\Framework\TestCase;
 use VCR\Request;
 use VCR\Response;
+use VCR\VCRException;
 
-class CurlHelperTest extends \PHPUnit_Framework_TestCase
+class CurlHelperTest extends TestCase
 {
     /**
      * @dataProvider getHttpMethodsProvider()
@@ -14,7 +16,7 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
     public function testSetCurlOptionMethods($method)
     {
         $request = new Request($method, 'example.com');
-        $headers = array('Host: example.com');
+        $headers = ['Host: example.com'];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
 
@@ -28,16 +30,16 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
      */
     public function getHttpMethodsProvider()
     {
-        return array(
-            array('CONNECT'),
-            array('DELETE'),
-            array('GET'),
-            array('HEAD'),
-            array('OPTIONS'),
-            array('POST'),
-            array('PUT'),
-            array('TRACE'),
-        );
+        return [
+            ['CONNECT'],
+            ['DELETE'],
+            ['GET'],
+            ['HEAD'],
+            ['OPTIONS'],
+            ['POST'],
+            ['PUT'],
+            ['TRACE'],
+        ];
     }
 
     public function testSetCurlOptionOnRequestPostFieldsQueryString()
@@ -53,7 +55,7 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
     public function testSetCurlOptionOnRequestPostFieldsArray()
     {
         $request = new Request('POST', 'example.com');
-        $payload = array('some' => 'test');
+        $payload = ['some' => 'test'];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, $payload);
 
@@ -64,7 +66,7 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
     public function testSetCurlOptionOnRequestPostFieldsString()
     {
         $request = new Request('POST', 'example.com');
-        $payload = json_encode(array('some' => 'test'));
+        $payload = json_encode(['some' => 'test'], JSON_THROW_ON_ERROR);
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, $payload);
 
@@ -86,63 +88,63 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
     public function testSetCurlOptionOnRequestSetSingleHeader()
     {
         $request = new Request('GET', 'example.com');
-        $headers = array('Host: example.com');
+        $headers = ['Host: example.com'];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
 
-        $this->assertEquals(array('Host' => 'example.com'), $request->getHeaders());
+        $this->assertEquals(['Host' => 'example.com'], $request->getHeaders());
     }
 
     public function testSetCurlOptionOnRequestSetSingleHeaderTwice()
     {
         $request = new Request('GET', 'example.com');
-        $headers = array('Host: example.com');
+        $headers = ['Host: example.com'];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
 
-        $this->assertEquals(array('Host' => 'example.com'), $request->getHeaders());
+        $this->assertEquals(['Host' => 'example.com'], $request->getHeaders());
     }
 
     public function testSetCurlOptionOnRequestSetMultipleHeadersTwice()
     {
         $request = new Request('GET', 'example.com');
-        $headers = array(
+        $headers = [
             'Host: example.com',
             'Content-Type: application/json',
-        );
+        ];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
 
-        $expected = array(
+        $expected = [
             'Host' => 'example.com',
-            'Content-Type' => 'application/json'
-        );
+            'Content-Type' => 'application/json',
+        ];
         $this->assertEquals($expected, $request->getHeaders());
     }
 
     public function testSetCurlOptionOnRequestEmptyPostFieldsRemovesContentType()
     {
         $request = new Request('GET', 'example.com');
-        $headers = array(
+        $headers = [
             'Host: example.com',
             'Content-Type: application/json',
-        );
+        ];
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_HTTPHEADER, $headers);
-        CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, array());
+        CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, []);
 
-        $expected = array(
+        $expected = [
             'Host' => 'example.com',
-        );
+        ];
         $this->assertEquals($expected, $request->getHeaders());
     }
 
     public function testSetCurlOptionOnRequestPostFieldsSetsPostMethod()
     {
         $request = new Request('GET', 'example.com');
-        $payload = json_encode(array('some' => 'test'));
+        $payload = json_encode(['some' => 'test']);
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, $payload);
 
@@ -160,10 +162,11 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
     public function testSetCurlOptionReadFunctionMissingSize()
     {
-        $this->setExpectedException('\VCR\VCRException', 'To set a CURLOPT_READFUNCTION, CURLOPT_INFILESIZE must be set.');
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage('To set a CURLOPT_READFUNCTION, CURLOPT_INFILESIZE must be set.');
         $request = new Request('POST', 'example.com');
 
-        $callback = function ($curlHandle, $fileHandle, $size) {
+        $callback = function($curlHandle, $fileHandle, $size) {
         };
 
         CurlHelper::setCurlOptionOnRequest($request, CURLOPT_READFUNCTION, $callback, curl_init());
@@ -176,9 +179,9 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
         $request = new Request('POST', 'example.com');
 
         $test = $this;
-        $callback = function ($curlHandle, $fileHandle, $size) use ($test, $expected) {
-            $test->assertInternalType('resource', $curlHandle);
-            $test->assertInternalType('resource', $fileHandle);
+        $callback = function($curlHandle, $fileHandle, $size) use ($test, $expected) {
+            $test->assertIsResource($curlHandle);
+            $test->assertIsResource($fileHandle);
             $test->assertEquals(strlen($expected), $size);
 
             return $expected;
@@ -193,10 +196,10 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
     public function testHandleResponseReturnsBody()
     {
-        $curlOptions = array(
-            CURLOPT_RETURNTRANSFER => true
-        );
-        $response = new Response(200, array(), 'example response');
+        $curlOptions = [
+            CURLOPT_RETURNTRANSFER => true,
+        ];
+        $response = new Response(200, [], 'example response');
 
         $output = CurlHelper::handleOutput($response, $curlOptions, curl_init());
 
@@ -205,10 +208,10 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
     public function testHandleResponseEchosBody()
     {
-        $response = new Response(200, array(), 'example response');
+        $response = new Response(200, [], 'example response');
 
         ob_start();
-        CurlHelper::handleOutput($response, array(), curl_init());
+        CurlHelper::handleOutput($response, [], curl_init());
         $output = ob_get_clean();
 
         $this->assertEquals($response->getBody(true), $output);
@@ -216,46 +219,46 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
     public function testHandleResponseIncludesHeader()
     {
-        $curlOptions = array(
+        $curlOptions = [
             CURLOPT_HEADER => true,
             CURLOPT_RETURNTRANSFER => true,
-        );
-        $status = array(
+        ];
+        $status = [
             'code' => 200,
             'message' => 'OK',
-            'http_version' => '1.1'
-        );
-        $response = new Response($status, array(), 'example response');
+            'http_version' => '1.1',
+        ];
+        $response = new Response($status, [], 'example response');
 
         $output = CurlHelper::handleOutput($response, $curlOptions, curl_init());
 
-        $this->assertEquals("HTTP/1.1 200 OK\r\n\r\n" . $response->getBody(), $output);
+        $this->assertEquals("HTTP/1.1 200 OK\r\n\r\n".$response->getBody(), $output);
     }
 
     public function testHandleOutputHeaderFunction()
     {
-        $actualHeaders = array();
-        $curlOptions = array(
-            CURLOPT_HEADERFUNCTION => function ($ch, $header) use (&$actualHeaders) {
+        $actualHeaders = [];
+        $curlOptions = [
+            CURLOPT_HEADERFUNCTION => function($ch, $header) use (&$actualHeaders) {
                 $actualHeaders[] = $header;
             },
-        );
-        $status = array(
+        ];
+        $status = [
             'code' => 200,
             'message' => 'OK',
             'http_version' => '1.1',
-        );
-        $headers = array(
+        ];
+        $headers = [
             'Content-Length' => 0,
-        );
+        ];
         $response = new Response($status, $headers, 'example response');
         CurlHelper::handleOutput($response, $curlOptions, curl_init());
 
-        $expected = array(
+        $expected = [
             'HTTP/1.1 200 OK',
             'Content-Length: 0',
-            ''
-        );
+            '',
+        ];
         $this->assertEquals($expected, $actualHeaders);
     }
 
@@ -264,15 +267,15 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
         $test = $this;
         $expectedCh = curl_init();
         $expectedBody = 'example response';
-        $curlOptions = array(
-            CURLOPT_WRITEFUNCTION => function ($ch, $body) use ($test, $expectedCh, $expectedBody) {
+        $curlOptions = [
+            CURLOPT_WRITEFUNCTION => function($ch, $body) use ($test, $expectedCh, $expectedBody) {
                 $test->assertEquals($expectedCh, $ch);
                 $test->assertEquals($expectedBody, $body);
 
                 return strlen($body);
-            }
-        );
-        $response = new Response(200, array(), $expectedBody);
+            },
+        ];
+        $response = new Response(200, [], $expectedBody);
 
         CurlHelper::handleOutput($response, $curlOptions, $expectedCh);
     }
@@ -283,11 +286,11 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
         $expectedBody = 'example response';
         $testFile = vfsStream::url('test/write_file');
 
-        $curlOptions = array(
-            CURLOPT_FILE => fopen($testFile, 'w+')
-        );
+        $curlOptions = [
+            CURLOPT_FILE => fopen($testFile, 'w+'),
+        ];
 
-        $response = new Response(200, array(), $expectedBody);
+        $response = new Response(200, [], $expectedBody);
 
         CurlHelper::handleOutput($response, $curlOptions, curl_init());
 
@@ -311,93 +314,93 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
     public function getCurlOptionProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 Response::fromArray(
-                    array(
-                        'status'    => array(
+                    [
+                        'status' => [
                             'http_version' => '1.1',
                             'code' => 200,
                             'message' => 'OK',
-                        ),
-                        'headers'   => array(
+                        ],
+                        'headers' => [
                             'Host' => 'localhost:8000',
                             'Connection' => 'close',
                             'Content-type' => 'text/html; charset=UTF-8',
 
-                        ),
-                    )
+                        ],
+                    ]
                 ),
                 CURLINFO_HEADER_SIZE,
                 100,
-            ),
-            array(
+            ],
+            [
                 Response::fromArray(
-                    array(
-                        'status'    => array(
+                    [
+                        'status' => [
                             'http_version' => '1.1',
                             'code' => 404,
                             'message' => 'Not Found',
-                        ),
-                        'headers'   => array(
+                        ],
+                        'headers' => [
                             'Host' => 'localhost:8000',
                             'Connection' => 'close',
                             'Content-type' => 'text/html; charset=UTF-8',
 
-                        ),
-                    )
+                        ],
+                    ]
                 ),
                 CURLINFO_HEADER_SIZE,
                 107,
-            ),
-            array(
+            ],
+            [
                 Response::fromArray(
-                    array(
-                        'status'    => array(
+                    [
+                        'status' => [
                             'http_version' => '1.1',
                             'code' => 200,
                             'message' => 'OK',
-                        ),
-                        'headers'   => array(
+                        ],
+                        'headers' => [
                             'Host' => 'localhost:8000',
                             'Connection' => 'close',
                             'Content-type' => 'text/html; charset=UTF-8',
                             'X-Powered-By' => 'PHP/5.6.4-4ubuntu6',
-                        ),
-                    )
+                        ],
+                    ]
                 ),
                 CURLINFO_HEADER_SIZE,
                 134,
-            ),
-            array(
+            ],
+            [
                 Response::fromArray(
-                    array(
-                        'status'    => array(
+                    [
+                        'status' => [
                             'http_version' => '1.1',
                             'code' => 200,
                             'message' => 'OK',
-                        ),
-                        'headers'   => array(
+                        ],
+                        'headers' => [
                             'Host' => 'localhost:8000',
                             'Connection' => 'close',
                             'Content-type' => 'text/html; charset=UTF-8',
                             'Cache-Control' => 'no-cache, must-revalidate',
                             'Pragma' => 'no-cache',
-                        ),
-                    )
+                        ],
+                    ]
                 ),
                 CURLINFO_HEADER_SIZE,
                 160,
-            ),
-            array(
+            ],
+            [
                 Response::fromArray(
-                    array(
-                        'status'    => array(
+                    [
+                        'status' => [
                             'http_version' => '1.1',
                             'code' => 200,
                             'message' => 'OK',
-                        ),
-                        'headers'   => array(
+                        ],
+                        'headers' => [
                             'Host' => 'localhost:8000',
                             'Connection' => 'close',
                             'X-Powered-By' => 'PHP/5.6.4-4ubuntu6',
@@ -406,13 +409,13 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
                             'Cache-Control' => 'no-store, no-cache, must-revalidate',
                             'Pragma' => 'no-cache',
                             'Content-type' => 'text/html; charset=UTF-8',
-                        ),
-                    )
+                        ],
+                    ]
                 ),
                 CURLINFO_HEADER_SIZE,
                 290,
-            ),
-        );
+            ],
+        ];
     }
 
     public function testSetCurlOptionCustomRequest()
@@ -432,7 +435,7 @@ class CurlHelperTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('DELETE', $request->getMethod());
 
-        CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, array('some' => 'test'));
+        CurlHelper::setCurlOptionOnRequest($request, CURLOPT_POSTFIELDS, ['some' => 'test']);
 
         $this->assertEquals('DELETE', $request->getMethod());
     }

@@ -2,20 +2,21 @@
 
 namespace VCR\Event;
 
+use PHPUnit\Framework\TestCase;
 use VCR\Request;
 use VCR\Cassette;
 use VCR\Configuration;
 use VCR\Storage;
 use VCR\Response;
 
-class AfterPlaybackEventTest extends \PHPUnit_Framework_TestCase
+class AfterPlaybackEventTest extends TestCase
 {
     /**
      * @var AfterPlaybackEvent
      */
     private $event;
 
-    protected function setUp()
+    protected function setUp() : void
     {
         $this->event = new AfterPlaybackEvent(
             new Request('GET', 'http://example.com'),

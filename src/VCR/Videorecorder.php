@@ -2,6 +2,9 @@
 
 namespace VCR;
 
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Contracts\EventDispatcher\Event;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use VCR\Util\Assertion;
 use VCR\Util\HttpClient;
 use VCR\Event\AfterHttpRequestEvent;
@@ -9,9 +12,7 @@ use VCR\Event\AfterPlaybackEvent;
 use VCR\Event\BeforeHttpRequestEvent;
 use VCR\Event\BeforePlaybackEvent;
 use VCR\Event\BeforeRecordEvent;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\EventDispatcher\Event;
+
 
 /**
  * A videorecorder records requests on a cassette.
@@ -101,7 +102,7 @@ class Videorecorder
      */
     private function dispatch($eventName, Event $event = null)
     {
-        return $this->getEventDispatcher()->dispatch($eventName, $event);
+        return $this->getEventDispatcher()->dispatch($event, $eventName);
     }
 
     /**

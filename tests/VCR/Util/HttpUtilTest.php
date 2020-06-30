@@ -2,12 +2,14 @@
 
 namespace VCR\Util;
 
-class HttpUtilTest extends \PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class HttpUtilTest extends TestCase
 {
     public function testParseResponseBasic()
     {
         $raw = "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nDate: Fri, 19 Jun 2015 16:05:18 GMT\r\nVary: Accept-Encoding\r\nContent-Length: 0\r\n\r\n";
-        list($status, $headers, $body) = HttpUtil::parseResponse($raw);
+        [$status, $headers, $body] = HttpUtil::parseResponse($raw);
 
         $expectedHeaders = array(
             'Content-Type: text/html',
@@ -24,7 +26,7 @@ class HttpUtilTest extends \PHPUnit_Framework_TestCase
     public function testParseResponseMultipleHeaders()
     {
         $raw = "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nDate: Fri, 19 Jun 2015 16:05:18 GMT\r\nVary: Accept, Accept-Language, Expect\r\nVary: Accept-Encoding\r\nContent-Length: 0\r\n\r\n";
-        list($status, $headers, $body) = HttpUtil::parseResponse($raw);
+        [$status, $headers, $body] = HttpUtil::parseResponse($raw);
 
         $expectedHeaders = array(
             'Content-Type: text/html',
@@ -42,7 +44,7 @@ class HttpUtilTest extends \PHPUnit_Framework_TestCase
     public function testParseContinuePlusResponse()
     {
         $raw = "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 201 Created\r\nContent-Type: text/html\r\nDate: Fri, 19 Jun 2015 16:05:18 GMT\r\nVary: Accept-Encoding\r\nContent-Length: 0\r\n\r\n";
-        list($status, $headers, $body) = HttpUtil::parseResponse($raw);
+        [$status, $headers, $body] = HttpUtil::parseResponse($raw);
 
         $expectedHeaders = array(
             'Content-Type: text/html',
@@ -59,7 +61,7 @@ class HttpUtilTest extends \PHPUnit_Framework_TestCase
     public function testParseiMultipleContinuePlusResponse()
     {
         $raw = "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 201 Created\r\nContent-Type: text/html\r\nDate: Fri, 19 Jun 2015 16:05:18 GMT\r\nVary: Accept-Encoding\r\nContent-Length: 0\r\n\r\n";
-        list($status, $headers, $body) = HttpUtil::parseResponse($raw);
+        [$status, $headers, $body] = HttpUtil::parseResponse($raw);
 
         $expectedHeaders = array(
             'Content-Type: text/html',
@@ -77,7 +79,7 @@ class HttpUtilTest extends \PHPUnit_Framework_TestCase
     public function testParseContinuePlusResponseMultipleHeaders()
     {
         $raw = "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 201 Created\r\nContent-Type: text/html\r\nDate: Fri, 19 Jun 2015 16:05:18 GMT\r\nVary: Accept, Accept-Language, Expect\r\nVary: Accept-Encoding\r\nContent-Length: 0\r\n\r\n";
-        list($status, $headers, $body) = HttpUtil::parseResponse($raw);
+        [$status, $headers, $body] = HttpUtil::parseResponse($raw);
 
         $expectedHeaders = array(
             'Content-Type: text/html',

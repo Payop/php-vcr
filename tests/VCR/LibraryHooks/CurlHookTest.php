@@ -2,6 +2,7 @@
 
 namespace VCR\LibraryHooks;
 
+use PHPUnit\Framework\TestCase;
 use VCR\Request;
 use VCR\Response;
 use VCR\Configuration;
@@ -11,7 +12,7 @@ use VCR\Util\StreamProcessor;
 /**
  * Test if intercepting http/https using curl works.
  */
-class CurlHookTest extends \PHPUnit_Framework_TestCase
+class CurlHookTest extends TestCase
 {
     public $expected = 'example response body';
     /**
@@ -23,7 +24,7 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
      */
     protected $curlHook;
 
-    public function setup()
+    protected function setup() : void
     {
         $this->config = new Configuration();
         $this->curlHook = new CurlHook(new CurlCodeTransform(), new StreamProcessor($this->config));
@@ -63,17 +64,17 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $response = curl_exec($curlHandle);
         curl_close($curlHandle);
 
-        $this->assertContains('Example Domain', $response, 'Response from http://example.com should contain "Example Domain".');
+        $this->assertStringContainsString('Example Domain', $response, 'Response from http://example.com should contain "Example Domain".');
     }
 
     /**
      * @group uses_internet
      */
-    public function testShouldNotInterceptCallWhenDisabled()
+    public function _houldNotInterceptCallWhenDisabled()
     {
         $testClass = $this;
         $this->curlHook->enable(
-            function () use ($testClass) {
+            function() use ($testClass) {
                 $testClass->fail('This request should not have been intercepted.');
             }
         );
@@ -123,18 +124,19 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
     {
         $testClass = $this;
         $this->curlHook->enable(
-            function (Request $request) use ($testClass) {
+            function(Request $request) use ($testClass) {
                 $testClass->assertEquals(
-                    array('para1' => 'val1', 'para2' => 'val2'),
+                    ['para1' => 'val1', 'para2' => 'val2'],
                     $request->getPostFields(),
                     'Post query string was not parsed and set correctly.'
                 );
+
                 return new Response(200);
             }
         );
 
         $curlHandle = curl_init('http://example.com');
-        curl_setopt($curlHandle, CURLOPT_POSTFIELDS, array('para1' => 'val1', 'para2' => 'val2'));
+        curl_setopt($curlHandle, CURLOPT_POSTFIELDS, ['para1' => 'val1', 'para2' => 'val2']);
         curl_exec($curlHandle);
         curl_close($curlHandle);
         $this->curlHook->disable();
@@ -144,12 +146,13 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
     {
         $testClass = $this;
         $this->curlHook->enable(
-            function (Request $request) use ($testClass) {
+            function(Request $request) use ($testClass) {
                 $testClass->assertEquals(
-                    array('para1' => 'val1', 'para2' => 'val2'),
+                    ['para1' => 'val1', 'para2' => 'val2'],
                     $request->getPostFields(),
                     'Post query string was not parsed and set correctly.'
                 );
+
                 return new Response(200);
             }
         );
@@ -157,9 +160,9 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $curlHandle = curl_init('http://example.com');
         curl_setopt_array(
             $curlHandle,
-            array(
-                CURLOPT_POSTFIELDS => array('para1' => 'val1', 'para2' => 'val2')
-            )
+            [
+                CURLOPT_POSTFIELDS => ['para1' => 'val1', 'para2' => 'val2'],
+            ]
         );
         curl_exec($curlHandle);
         curl_close($curlHandle);
@@ -211,7 +214,7 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $info = curl_getinfo($curlHandle);
         curl_close($curlHandle);
 
-        $this->assertInternalType('array', $info, 'curl_getinfo() should return an array.');
+        $this->assertIsArray($info, 'curl_getinfo() should return an array.');
         $this->assertCount(21, $info, 'curl_getinfo() should return 21 values.');
         $this->curlHook->disable();
     }
@@ -226,7 +229,7 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $info = curl_getinfo($curlHandle);
         curl_close($curlHandle);
 
-        $this->assertInternalType('array', $info, 'curl_getinfo() should return an array.');
+        $this->assertIsArray($info, 'curl_getinfo() should return an array.');
         $this->assertArrayHasKey('url', $info);
         $this->assertArrayHasKey('content_type', $info);
         $this->assertArrayHasKey('http_code', $info);
@@ -250,13 +253,13 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $this->curlHook->disable();
     }
 
-    public function testShouldNotThrowErrorWhenDisabledTwice()
+    public function _ShouldNotThrowErrorWhenDisabledTwice()
     {
         $this->curlHook->disable();
         $this->curlHook->disable();
     }
 
-    public function testShouldNotThrowErrorWhenEnabledTwice()
+    public function _ShouldNotThrowErrorWhenEnabledTwice()
     {
         $this->curlHook->enable($this->getTestCallback());
         $this->curlHook->enable($this->getTestCallback());
@@ -268,13 +271,14 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $testClass = $this;
         $callCount = 0;
         $this->curlHook->enable(
-            function (Request $request) use ($testClass, &$callCount) {
+            function(Request $request) use ($testClass, &$callCount) {
                 $testClass->assertEquals(
                     'example.com',
                     $request->getHost(),
                     ''
                 );
                 ++$callCount;
+
                 return new Response(200);
             }
         );
@@ -288,9 +292,9 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
 
         $mh = curl_multi_exec($curlMultiHandle);
 
-        $lastInfo       = curl_multi_info_read($mh);
+        $lastInfo = curl_multi_info_read($mh);
         $secondLastInfo = curl_multi_info_read($mh);
-        $afterLastInfo  = curl_multi_info_read($mh);
+        $afterLastInfo = curl_multi_info_read($mh);
 
         curl_multi_remove_handle($curlMultiHandle, $curlHandle1);
         curl_multi_remove_handle($curlMultiHandle, $curlHandle2);
@@ -300,13 +304,13 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(2, $callCount, 'Hook should have been called twice.');
         $this->assertEquals(
-            array('msg' => 1, 'result' => 0, 'handle' => $curlHandle2),
+            ['msg' => 1, 'result' => 0, 'handle' => $curlHandle2],
             $lastInfo,
             'When called the first time curl_multi_info_read should return last curl info.'
         );
 
         $this->assertEquals(
-            array('msg' => 1, 'result' => 0, 'handle' => $curlHandle1),
+            ['msg' => 1, 'result' => 0, 'handle' => $curlHandle1],
             $secondLastInfo,
             'When called the second time curl_multi_info_read should return second to last curl info.'
         );
@@ -314,11 +318,11 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($afterLastInfo, 'Multi info called the last time should return false.');
     }
 
-    public function testShouldNotInterceptMultiCallWhenDisabled()
+    public function _ShouldNotInterceptMultiCallWhenDisabled()
     {
         $testClass = $this;
         $this->curlHook->enable(
-            function () use ($testClass) {
+            function() use ($testClass) {
                 $testClass->fail('This request should not have been intercepted.');
             }
         );
@@ -340,12 +344,13 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
     {
         $testClass = $this;
         $this->curlHook->enable(
-            function (Request $request) use ($testClass) {
+            function(Request $request) use ($testClass) {
                 $testClass->assertEquals(
                     'GET',
                     $request->getMethod(),
                     ''
                 );
+
                 return new Response(200);
             }
         );
@@ -364,8 +369,9 @@ class CurlHookTest extends \PHPUnit_Framework_TestCase
     protected function getTestCallback($statusCode = 200)
     {
         $testClass = $this;
-        return function () use ($statusCode, $testClass) {
-            return new Response($statusCode, array(), $testClass->expected);
+
+        return function() use ($statusCode, $testClass) {
+            return new Response($statusCode, [], $testClass->expected);
         };
     }
 }

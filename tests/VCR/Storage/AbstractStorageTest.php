@@ -3,11 +3,13 @@
 namespace VCR\Storage;
 
 use org\bovigo\vfs\vfsStream;
+use PHPUnit\Framework\TestCase;
+use VCR\VCRException;
 
 /**
  * Test integration of PHPVCR with PHPUnit.
  */
-class AbstractStorageTest extends \PHPUnit_Framework_TestCase
+class AbstractStorageTest extends TestCase
 {
     protected $handle;
     protected $filePath;
@@ -27,7 +29,8 @@ class AbstractStorageTest extends \PHPUnit_Framework_TestCase
 
     public function testRootNotExisting()
     {
-        $this->setExpectedException('\VCR\VCRException', "Cassette path 'vfs://test/foo' is not existing or not a directory");
+        $this->expectException(VCRException::class);
+        $this->expectExceptionMessage("Cassette path 'vfs://test/foo' is not existing or not a directory");
 
         vfsStream::setup('test');
         new TestStorage(vfsStream::url('test/foo'), 'file');
@@ -45,7 +48,7 @@ class TestStorage extends AbstractStorage
 
     public function next()
     {
-        list($this->position, $this->current) = each($this->recording);
+        [$this->position, $this->current] = each($this->recording);
 
         return $this->current;
     }
